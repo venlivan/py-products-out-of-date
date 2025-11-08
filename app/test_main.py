@@ -1,13 +1,14 @@
 import datetime
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from app.main import outdated_products
 
 
 @pytest.mark.parametrize(
-    "input_data, expected",
+    "today, input_data, expected",
     [
         (
+            datetime.date(2022, 2, 2),
             [
                 {
                     "name": "salmon",
@@ -28,6 +29,7 @@ from app.main import outdated_products
             []
         ),
         (
+            datetime.date(2022, 2, 2),
             [
                 {
                     "name": "salmon",
@@ -48,6 +50,7 @@ from app.main import outdated_products
             ["duck"]
         ),
         (
+            datetime.date(2022, 2, 2),
             [
                 {
                     "name": "salmon",
@@ -68,15 +71,21 @@ from app.main import outdated_products
             ["salmon", "chicken", "duck"]
         ),
         (
+            datetime.date(2022, 2, 2),
             [],
             []
         )
     ]
 )
-@patch("app.main.datetime.date.today", return_value=datetime.date(2022, 2, 2))
 def test_outdated_products(
-        mock_today: MagicMock,
+        today: datetime.date,
         input_data: list,
         expected: list
 ) -> None:
-    assert outdated_products(input_data) == expected
+    with (patch("app.main.datetime") as mock_datetime):
+        mock_datetime.date.today.return_value = today
+        mock_datetime.date.side_effect = lambda *args, **kwargs: datetime.date(
+            *args,
+            **kwargs
+        )
+        assert outdated_products(input_data) == expected
